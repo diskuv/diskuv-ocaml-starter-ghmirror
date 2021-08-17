@@ -1,0 +1,3 @@
+[submodule "vendor/diskuv-ocaml"]
+	path = vendor/diskuv-ocaml
+	url = https://gitlab.com/diskuv/diskuv-ocaml.git

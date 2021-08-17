@@ -1,0 +1,11 @@
+# Sometimes it is useful to source control all of the configuration files, or at least the ones you override.
+#
+# Quick instructions:
+# 1. If you want you source control everything then comment ALL of the lines in this file.
+# 2. See https://git-scm.com/docs/gitignore for anything more advanced.
+
+dune.env.workspace.inc
+
+# Ignore all of the configuration files except the ones we explicitly unignore with "!"
+*.sexp
+!3-all-*.ocamlopt_flags.sexp

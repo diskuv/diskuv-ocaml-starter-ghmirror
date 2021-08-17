@@ -1,0 +1,5 @@
+(executable
+ (public_name starter)
+ (name main)
+ (libraries starter)
+ (link_flags (:include %{project_root}/vendor/diskuv-ocaml/buildtime/executable.link_flags.sexp)))

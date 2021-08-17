@@ -1,0 +1,6 @@
+{
+    "ocaml.sandbox": {
+        "kind": "opam",
+        "switch": "${workspaceFolder:diskuv-ocaml-starter}${pathSeparator}build${pathSeparator}dev${pathSeparator}Debug"
+    }
+}
