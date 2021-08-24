@@ -14,8 +14,15 @@
 
 opam-version: "2.0"
 name: "starter"
-maintainer: "you@example.net"
-authors: ["you@example.net"]
+maintainer: "opensource+diskuv-ocaml-starter@support.diskuv.com"
+authors: "[Diskuv, Inc. <opensource+diskuv-ocaml-starter@support.diskuv.com>]"
 synopsis: "A starter application to demonstrate Diskuv OCaml"
-homepage: ["https://github.com/diskuv/diskuv-ocaml-starter#readme"]
-bug-reports: ["https://github.com/diskuv/diskuv-ocaml-starter/issues"]
+license: "Apache-2.0"
+homepage: ["https://diskuv.gitlab.io/diskuv-ocaml"]
+bug-reports: ["https://gitlab.com/diskuv/diskuv-ocaml-starter/-/issues"]
+depends: [
+    "dune" {>= "2.9"}
+    "ocaml" {>= "4.12"}
+    "core_kernel" {= "v0.14.2"}
+]
+dev-repo: "git+https://gitlab.com/diskuv/diskuv-ocaml-starter.git"
