@@ -1,2 +1,3 @@
 (library
- (name starter))
+ (name starter)
+ (libraries base stdio))
