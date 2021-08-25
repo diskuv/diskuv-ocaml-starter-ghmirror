@@ -4,6 +4,8 @@
 
 **Documentation is available at https://diskuv.gitlab.io/diskuv-ocaml/**
 
+![Twitter Follow](https://img.shields.io/twitter/follow/diskuv?style=social)
+
 ## Licensing
 
 The subdirectories named `diskuv-ocaml`, in particular `vendor/diskuv-ocaml/`, have the
