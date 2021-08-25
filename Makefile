@@ -6,7 +6,8 @@
 #-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#
 
 # The subdirectory for the 'diskuv-ocaml' git submodule
-DKML_DIR = vendor/diskuv-ocaml
+# (The `$(dir $(lastword $(MAKEFILE_LIST)))` expands to the directory of this Makefile with a trailing slash)
+DKML_DIR := $(dir $(lastword $(MAKEFILE_LIST)))vendor/diskuv-ocaml
 
 # Verbose tracing of each command. Either ON or OFF
 DKML_BUILD_TRACE = OFF
