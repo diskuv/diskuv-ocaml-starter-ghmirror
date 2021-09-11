@@ -14,6 +14,9 @@ The subdirectories named `diskuv-ocaml`, in particular `vendor/diskuv-ocaml/`, h
 and can have limited commercial use for up to 5 developers; it also has **broad exceptions for OCaml package maintainers**.
 Fair Source licenses are neither open-source nor closed-source and are described in more detail at https://fair.io/.
 
+School teachers and college professors may redistribute the *Diskuv OCaml* distribution to their students under the
+[diskuv-ocaml LICENSE](https://gitlab.com/diskuv/diskuv-ocaml/-/raw/main/LICENSE.txt); each student is covered for **free personal use**.
+
 The remainder of `diskuv-ocaml-starter` is open-source and licensed liberally under the [Apache v2.0 LICENSE.txt](LICENSE.txt).
 
 License questions can be directed to support@diskuv.com.
