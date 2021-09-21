@@ -6,6 +6,16 @@
 
 ![Twitter Follow](https://img.shields.io/twitter/follow/diskuv?style=social)
 
+## Installation
+
+Windows: https://diskuv.gitlab.io/diskuv-ocaml/
+
+macOS:
+```sh
+! command -v opam && brew install gpatch && brew install opam
+./makeit build-dev
+```
+
 ## Licensing
 
 The subdirectories named `diskuv-ocaml`, in particular `vendor/diskuv-ocaml/`, have the
