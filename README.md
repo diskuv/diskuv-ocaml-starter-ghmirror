@@ -20,3 +20,17 @@ School teachers and college professors may redistribute the *Diskuv OCaml* distr
 The remainder of `diskuv-ocaml-starter` is open-source and licensed liberally under the [Apache v2.0 LICENSE.txt](LICENSE.txt).
 
 License questions can be directed to support@diskuv.com.
+
+## Continuous Testing
+
+### GitLab
+
+The authoritative starter source code is on GitLab at https://gitlab.com/diskuv/diskuv-ocaml-starter.
+Currently there are no GitLab CI scripts.
+
+### GitHub
+
+There is a mirror of the starter source code on GitHub at https://github.com/diskuv/diskuv-ocaml-starter-ghmirror.
+
+The directory `.github/workflows` has a set of GitHub Actions you can use to build and test your own Local Projects.
+You can see the results at https://github.com/diskuv/diskuv-ocaml-starter-ghmirror/actions
