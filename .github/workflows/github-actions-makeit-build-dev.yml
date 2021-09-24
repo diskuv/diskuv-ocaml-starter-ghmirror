@@ -61,12 +61,12 @@ jobs:
         run: |
           $ErrorActionPreference = "Continue"
           .\vendor\diskuv-ocaml\installtime\windows\setup-userprofile.ps1 -SkipProgress -AllowRunAsAdmin -ForceDeploymentSlot0 -MSYS2Dir C:\msys64
-          Write-Host "LastExitCode = $LastExitCode"
-          if (Test-Path "$env:LOCALAPPDATA\Programs\DiskuvOCaml\0\system\_opam\.opam-switch\build\ocamlfind.1.9.1\") { Get-ChildItem -Path "$env:LOCALAPPDATA\Programs\DiskuvOCaml\0\system\_opam\.opam-switch\build\ocamlfind.1.9.1\" -Recurse; }
-          Get-ChildItem -Path "$env:LOCALAPPDATA\opam\log\*" -Include "*.env", "*.out" | ForEach-Object { Write-Host "`n`n========= $($_.FullName) ===========`n`n"; Get-Content -Path $_.FullName }
-          if (Test-Path "$env:LOCALAPPDATA\Programs\DiskuvOCaml\0\system\_opam\.opam-switch\build\ocamlfind.1.9.1\ocargs.log") { Write-Host "`n`n=========== ocargs.log ==========="; Get-Content -Path "$env:LOCALAPPDATA\Programs\DiskuvOCaml\0\system\_opam\.opam-switch\build\ocamlfind.1.9.1\ocargs.log"; }
-      - name: Stop
-        run: throw "Remove these debugging lines"
+          $SetupExitCode = $LastExitCode
+          if ($SetupExitCode -ne 0) {
+            Get-ChildItem -Path "$env:LOCALAPPDATA\opam\log\*" -Include "*.env", "*.out" -Exclude "log-*.out", "log-*.env" | ForEach-Object { Write-Host "`n`n========= [TROUBLESHOOTING] $($_.FullName) ===========`n`n"; Get-Content -Path $_.FullName }
+            if (Test-Path "$env:LOCALAPPDATA\Programs\DiskuvOCaml\0\system\_opam\.opam-switch\build\ocamlfind.1.9.1\ocargs.log") { Write-Host "`n`n=========== [TROUBLESHOOTING] ocargs.log ==========="; Get-Content -Path "$env:LOCALAPPDATA\Programs\DiskuvOCaml\0\system\_opam\.opam-switch\build\ocamlfind.1.9.1\ocargs.log"; }
+            throw "setup-userprofile.ps1 failed with exit code $SetupExitCode. Scroll up to see the [TROUBLESHOOTING] logs"
+          }
 
   Build-And-Test:
     # strategy:
