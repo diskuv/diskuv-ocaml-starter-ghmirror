@@ -45,6 +45,9 @@ jobs:
             ${{ runner.os }}-setup-
             ${{ runner.os }}-
 
+      - name: Setup CI Container/Virtual Machine for Diskuv OCaml
+        run: .\vendor\diskuv-ocaml\installtime\windows\setup-machine.ps1 -SkipProgress -AllowRunAsAdmin -SilentInstall
+
       - name: Get Visual Studio Compatibility
         run: |
           $env:PSModulePath += "$([System.IO.Path]::PathSeparator)vendor\diskuv-ocaml\installtime\windows"
@@ -53,9 +56,6 @@ jobs:
           $ChosenVisualStudio = ($CompatibleVisualStudios | Select-Object -First 1)
           $VisualStudioProps = Get-VisualStudioProperties -VisualStudioInstallation $ChosenVisualStudio
           $VisualStudioProps
-
-      - name: Setup CI Container/Virtual Machine for Diskuv OCaml
-        run: .\vendor\diskuv-ocaml\installtime\windows\setup-machine.ps1 -SkipProgress -AllowRunAsAdmin -SkipAutoInstallVsBuildTools
 
       - name: Setup CI User for Diskuv OCaml
         run: |
@@ -119,7 +119,7 @@ jobs:
             ${{ runner.os }}-
 
       - name: Setup CI Container/Virtual Machine for Diskuv OCaml
-        run: .\vendor\diskuv-ocaml\installtime\windows\setup-machine.ps1 -SkipProgress -AllowRunAsAdmin -SkipAutoInstallVsBuildTools
+        run: .\vendor\diskuv-ocaml\installtime\windows\setup-machine.ps1 -SkipProgress -AllowRunAsAdmin -SilentInstall
 
       - name: Setup CI User for Diskuv OCaml
         run: |
