@@ -9,16 +9,16 @@ jobs:
         with:
           submodules: true # Checkout the vendor/diskuv-ocaml submodule
 
-      - name: Cache Diskuv OCaml Installation
-        id: cache_diskuvocaml_installation
+      - name: Cache Diskuv OCaml Archives
+        id: cache_diskuvocaml_archives
         uses: actions/cache@v2
         env:
-          cache-name: cache-diskuv-ocaml-installation
+          cache-name: diskuv-ocaml-archives
         with:
           path: |
-            ~\AppData\Local\Programs\DiskuvOCaml
-            ~\AppData\Local\opam
-            ~\AppData\Local\vcpkg
+            Programs-DiskuvOCaml.7z
+            vcpkg.7z
+            opam-root.7z
           key: ${{ runner.os }}-setup-${{ env.cache-name }}-dkml-${{ hashFiles('**/.dkmlroot') }}
           restore-keys: |
             ${{ runner.os }}-setup-${{ env.cache-name }}-
@@ -26,11 +26,11 @@ jobs:
             ${{ runner.os }}-
 
       - name: Setup CI Container/Virtual Machine for Diskuv OCaml
-        if: steps.cache_diskuvocaml_installation.outputs.cache-hit != 'true'
+        if: steps.cache_diskuvocaml_archives.outputs.cache-hit != 'true'
         run: .\vendor\diskuv-ocaml\installtime\windows\setup-machine.ps1 -SkipProgress -AllowRunAsAdmin -SilentInstall
 
       - name: Get Visual Studio Compatibility
-        if: steps.cache_diskuvocaml_installation.outputs.cache-hit != 'true'
+        if: steps.cache_diskuvocaml_archives.outputs.cache-hit != 'true'
         run: |
           $env:PSModulePath += "$([System.IO.Path]::PathSeparator)vendor\diskuv-ocaml\installtime\windows"
           Import-Module Machine # Use Get-CompatibleVisualStudios
@@ -40,7 +40,7 @@ jobs:
           $VisualStudioProps
 
       - name: Setup CI User for Diskuv OCaml
-        if: steps.cache_diskuvocaml_installation.outputs.cache-hit != 'true'
+        if: steps.cache_diskuvocaml_archives.outputs.cache-hit != 'true'
         run: |
           $global:RedeployIfExists = $true
           $global:IncrementalDiskuvOcamlDeployment = $true
@@ -57,20 +57,22 @@ jobs:
             throw "setup-userprofile.ps1 failed with exit code $SetupExitCode. Scroll up to see the [TROUBLESHOOTING] logs that begin at the [START OF TROUBLESHOOTING] line"
           }
 
-      - name: Archive Diskuv OCaml Installation
+      - name: Archive Diskuv OCaml
+        if: steps.cache_diskuvocaml_archives.outputs.cache-hit != 'true'
         run: |
-          Compress-Archive -Path "$env:LOCALAPPDATA\Programs\DiskuvOCaml\*" -DestinationPath Programs-DiskuvOCaml.zip
-          Compress-Archive -Path "$env:LOCALAPPDATA\vcpkg\*"                -DestinationPath vcpkg.zip
-          Compress-Archive -Path "$env:LOCALAPPDATA\opam\*"                 -DestinationPath opam-root.zip
+          cd "$env:LOCALAPPDATA\Programs\DiskuvOCaml"; 7z a "$env:GITHUB_WORKSPACE\Programs-DiskuvOCaml.7z" .
+          cd "$env:LOCALAPPDATA\vcpkg"               ; 7z a "$env:GITHUB_WORKSPACE\vcpkg.7z" .
+          cd "$env:LOCALAPPDATA\opam"                ; 7z a "$env:GITHUB_WORKSPACE\opam-root.7z" .
+          cd "$env:GITHUB_WORKSPACE"
 
-      - name: Upload Diskuv OCaml Installation
+      - name: Upload Diskuv OCaml into GitHub Workflow
         uses: actions/upload-artifact@v2
         with:
           name: diskuv-ocaml-installation
           path: |
-            Programs-DiskuvOCaml.zip
-            vcpkg.zip
-            opam-root.zip
+            Programs-DiskuvOCaml.7z
+            vcpkg.7z
+            opam-root.7z
           retention-days: 1
 
   Build-And-Test:
@@ -87,19 +89,20 @@ jobs:
         with:
           submodules: true
 
-      - name: Download Diskuv OCaml Installation
+      - name: Download Diskuv OCaml Archives from GitHub Workflow
         uses: actions/download-artifact@v2
         with:
           name: diskuv-ocaml-installation
 
-      - name: Expand Diskuv OCaml Installation
+      - name: Expand Diskuv OCaml Archives
         run: |
-          New-Item -Path "$env:LOCALAPPDATA\Programs\DiskuvOCaml" -ItemType Directory -Force
-          New-Item -Path "$env:LOCALAPPDATA\vcpkg"                -ItemType Directory -Force
-          New-Item -Path "$env:LOCALAPPDATA\opam"                 -ItemType Directory -Force
-          Expand-Archive -Path Programs-DiskuvOCaml.zip -DestinationPath "$env:LOCALAPPDATA\Programs\DiskuvOCaml"
-          Expand-Archive -Path vcpkg.zip                -DestinationPath "$env:LOCALAPPDATA\vcpkg"
-          Expand-Archive -Path opam-root.zip            -DestinationPath "$env:LOCALAPPDATA\opam"
+          New-Item -Path "$env:LOCALAPPDATA\Programs\DiskuvOCaml" -ItemType Directory -Force | Out-Null
+          New-Item -Path "$env:LOCALAPPDATA\vcpkg"                -ItemType Directory -Force | Out-Null
+          New-Item -Path "$env:LOCALAPPDATA\opam"                 -ItemType Directory -Force | Out-Null
+          cd "$env:LOCALAPPDATA\Programs\DiskuvOCaml"; 7z x -y -bt "$env:GITHUB_WORKSPACE\Programs-DiskuvOCaml.7z"
+          cd "$env:LOCALAPPDATA\vcpkg"               ; 7z x -y -bt "$env:GITHUB_WORKSPACE\vcpkg.7z"
+          cd "$env:LOCALAPPDATA\opam"                ; 7z x -y -bt "$env:GITHUB_WORKSPACE\opam-root.7z"
+          cd "$env:GITHUB_WORKSPACE"
 
       - name: Cache Opam Switches
         id: cache_opam_switches
