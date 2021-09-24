@@ -1,59 +1,36 @@
-name: Diskuv OCaml Actions
+name: makeit Actions
 on: [push]
 jobs:
-  Setup:
+  Install-Diskuv-OCaml:
     runs-on: windows-2019
-    env:
-      LOCALAPPDATA: C:\Users\runneradmin\AppData\Local
     steps:
       - name: Check out repository code
         uses: actions/checkout@v2
         with:
-          submodules: true # Setting this to true (or 'recursive') is the easiest way to checkout the vendor/diskuv-ocaml submodule
+          submodules: true # Checkout the vendor/diskuv-ocaml submodule
 
-      - name: Cache Diskuv OCaml AppData
-        id: cache_appdata
+      - name: Cache Diskuv OCaml Installation
+        id: cache_diskuvocaml_installation
         uses: actions/cache@v2
         env:
-          cache-name: cache-diskuv-ocaml-appdata
+          cache-name: cache-diskuv-ocaml-installation
         with:
-          path: ${{ env.LOCALAPPDATA }}\Programs\DiskuvOCaml
-          key: ${{ runner.os }}-setup-${{ env.cache-name }}-${{ hashFiles('**/.dkmlroot') }}
-          restore-keys: |
-            ${{ runner.os }}-setup-${{ env.cache-name }}-
-            ${{ runner.os }}-setup-
-            ${{ runner.os }}-
-
-      - name: Cache Diskuv OCaml Opam
-        id: cache_opam
-        uses: actions/cache@v2
-        env:
-          cache-name: cache-diskuv-ocaml-opam
-        with:
-          path: ${{ env.LOCALAPPDATA }}\opam
-          key: ${{ runner.os }}-setup-${{ env.cache-name }}-${{ hashFiles('**/.dkmlroot') }}
-          restore-keys: |
-            ${{ runner.os }}-setup-${{ env.cache-name }}-
-            ${{ runner.os }}-setup-
-            ${{ runner.os }}-
-
-      - name: Cache Diskuv OCaml vcpkg
-        id: cache_vcpkg
-        uses: actions/cache@v2
-        env:
-          cache-name: cache-diskuv-ocaml-vcpkg
-        with:
-          path: ${{ env.LOCALAPPDATA }}\vcpkg
-          key: ${{ runner.os }}-setup-${{ env.cache-name }}-${{ hashFiles('**/.dkmlroot') }}
+          path: |
+            ~\AppData\Local\Programs\DiskuvOCaml
+            ~\AppData\Local\opam
+            ~\AppData\Local\vcpkg
+          key: ${{ runner.os }}-setup-${{ env.cache-name }}-dkml-${{ hashFiles('**/.dkmlroot') }}
           restore-keys: |
             ${{ runner.os }}-setup-${{ env.cache-name }}-
             ${{ runner.os }}-setup-
             ${{ runner.os }}-
 
       - name: Setup CI Container/Virtual Machine for Diskuv OCaml
+        if: steps.cache_diskuvocaml_installation.outputs.cache-hit != 'true'
         run: .\vendor\diskuv-ocaml\installtime\windows\setup-machine.ps1 -SkipProgress -AllowRunAsAdmin -SilentInstall
 
       - name: Get Visual Studio Compatibility
+        if: steps.cache_diskuvocaml_installation.outputs.cache-hit != 'true'
         run: |
           $env:PSModulePath += "$([System.IO.Path]::PathSeparator)vendor\diskuv-ocaml\installtime\windows"
           Import-Module Machine # Use Get-CompatibleVisualStudios
@@ -63,16 +40,38 @@ jobs:
           $VisualStudioProps
 
       - name: Setup CI User for Diskuv OCaml
-        if: steps.cache_appdata.outputs.cache-hit != 'true' || steps.cache_opam.outputs.cache-hit != 'true' || steps.cache_vcpkg.outputs.cache-hit != 'true'
+        if: steps.cache_diskuvocaml_installation.outputs.cache-hit != 'true'
         run: |
+          $global:RedeployIfExists = $true
+          $global:IncrementalDiskuvOcamlDeployment = $true
           $ErrorActionPreference = "Continue"
           .\vendor\diskuv-ocaml\installtime\windows\setup-userprofile.ps1 -SkipProgress -AllowRunAsAdmin -ForceDeploymentSlot0 -MSYS2Dir C:\msys64
           $SetupExitCode = $LastExitCode
           if ($SetupExitCode -ne 0) {
+            Write-Host "`n`n========= [START OF TROUBLESHOOTING] ===========`n`n"
             Get-ChildItem -Path "$env:LOCALAPPDATA\opam\log\*" -Include "*.env", "*.out" -Exclude "log-*.out", "log-*.env" | ForEach-Object { Write-Host "`n`n========= [TROUBLESHOOTING] $($_.FullName) ===========`n`n"; Get-Content -Path $_.FullName }
+
+            # The next line is really an example ... if you need access to an extra log file that is produced by an Opam package's build scripts, then copy and paste the next line
             if (Test-Path "$env:LOCALAPPDATA\Programs\DiskuvOCaml\0\system\_opam\.opam-switch\build\ocamlfind.1.9.1\ocargs.log") { Write-Host "`n`n=========== [TROUBLESHOOTING] ocargs.log ==========="; Get-Content -Path "$env:LOCALAPPDATA\Programs\DiskuvOCaml\0\system\_opam\.opam-switch\build\ocamlfind.1.9.1\ocargs.log"; }
-            throw "setup-userprofile.ps1 failed with exit code $SetupExitCode. Scroll up to see the [TROUBLESHOOTING] logs"
+
+            throw "setup-userprofile.ps1 failed with exit code $SetupExitCode. Scroll up to see the [TROUBLESHOOTING] logs that begin at the [START OF TROUBLESHOOTING] line"
           }
+
+      - name: Archive Diskuv OCaml Installation
+        run: |
+          Compress-Archive -Path "$env:LOCALAPPDATA\Programs\DiskuvOCaml\*" -DestinationPath Programs-DiskuvOCaml.zip
+          Compress-Archive -Path "$env:LOCALAPPDATA\vcpkg\*"                -DestinationPath vcpkg.zip
+          Compress-Archive -Path "$env:LOCALAPPDATA\opam\*"                 -DestinationPath opam-root.zip
+
+      - name: Upload Diskuv OCaml Installation
+        uses: actions/upload-artifact@v2
+        with:
+          name: diskuv-ocaml-installation
+          path: |
+            Programs-DiskuvOCaml.zip
+            vcpkg.zip
+            opam-root.zip
+          retention-days: 1
 
   Build-And-Test:
     # strategy:
@@ -81,61 +80,40 @@ jobs:
     #       - x64     # 64-bit host for 64-bit target
     #       - x64_x86 # 64-bit host for 32-bit target
     runs-on: windows-2019
-    needs: Setup
+    needs: Install-Diskuv-OCaml
     steps:
       - name: Check out repository code
         uses: actions/checkout@v2
         with:
           submodules: true
 
-      - name: Cache Diskuv OCaml AppData
-        id: cache_appdata
-        uses: actions/cache@v2
-        env:
-          cache-name: cache-diskuv-ocaml-appdata
+      - name: Download Diskuv OCaml Installation
+        uses: actions/download-artifact@v2
         with:
-          path: ${{ env.LOCALAPPDATA }}\Programs\DiskuvOCaml
-          key: ${{ runner.os }}-setup-${{ env.cache-name }}-${{ hashFiles('**/.dkmlroot') }}
-          restore-keys: |
-            ${{ runner.os }}-setup-${{ env.cache-name }}-
-            ${{ runner.os }}-setup-
-            ${{ runner.os }}-
+          name: diskuv-ocaml-installation
 
-      - name: Cache Diskuv OCaml Opam
-        id: cache_opam
-        uses: actions/cache@v2
-        env:
-          cache-name: cache-diskuv-ocaml-opam
-        with:
-          path: ${{ env.LOCALAPPDATA }}\opam
-          key: ${{ runner.os }}-setup-${{ env.cache-name }}-${{ hashFiles('**/.dkmlroot') }}
-          restore-keys: |
-            ${{ runner.os }}-setup-${{ env.cache-name }}-
-            ${{ runner.os }}-setup-
-            ${{ runner.os }}-
-
-      - name: Cache Diskuv OCaml vcpkg
-        id: cache_vcpkg
-        uses: actions/cache@v2
-        env:
-          cache-name: cache-diskuv-ocaml-vcpkg
-        with:
-          path: ${{ env.LOCALAPPDATA }}\vcpkg
-          key: ${{ runner.os }}-setup-${{ env.cache-name }}-${{ hashFiles('**/.dkmlroot') }}
-          restore-keys: |
-            ${{ runner.os }}-setup-${{ env.cache-name }}-
-            ${{ runner.os }}-setup-
-            ${{ runner.os }}-
-
-      - name: Setup CI Container/Virtual Machine for Diskuv OCaml
-        run: .\vendor\diskuv-ocaml\installtime\windows\setup-machine.ps1 -SkipProgress -AllowRunAsAdmin -SilentInstall
-
-      - name: Setup CI User for Diskuv OCaml
-        if: steps.cache_appdata.outputs.cache-hit != 'true' || steps.cache_opam.outputs.cache-hit != 'true' || steps.cache_vcpkg.outputs.cache-hit != 'true'
+      - name: Expand Diskuv OCaml Installation
         run: |
-          $global:RedeployIfExists = $true
-          $global:IncrementalDiskuvOcamlDeployment = $true
-          .\vendor\diskuv-ocaml\installtime\windows\setup-userprofile.ps1 -SkipProgress -AllowRunAsAdmin -ForceDeploymentSlot0 -MSYS2Dir C:\msys64
+          New-Item -Path "$env:LOCALAPPDATA\Programs\DiskuvOCaml" -ItemType Directory -Force
+          New-Item -Path "$env:LOCALAPPDATA\vcpkg"                -ItemType Directory -Force
+          New-Item -Path "$env:LOCALAPPDATA\opam"                 -ItemType Directory -Force
+          Expand-Archive -Path Programs-DiskuvOCaml.zip -DestinationPath "$env:LOCALAPPDATA\Programs\DiskuvOCaml"
+          Expand-Archive -Path vcpkg.zip                -DestinationPath "$env:LOCALAPPDATA\vcpkg"
+          Expand-Archive -Path opam-root.zip            -DestinationPath "$env:LOCALAPPDATA\opam"
+
+      - name: Cache Opam Switches
+        id: cache_opam_switches
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-opam-switches
+        with:
+          path: |
+            build/*/*/_opam
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-dkml-${{ hashFiles('**/.dkmlroot') }}-opam-${{ hashFiles('**/.opam', '**/opam', '**.opam.lock', '**.opam.locked') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
 
       - name: ./makeit build-dev
         run: ./makeit build-dev DKML_BUILD_TRACE=ON
