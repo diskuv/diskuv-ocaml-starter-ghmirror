@@ -47,7 +47,7 @@ jobs:
           $ErrorActionPreference = "Continue"
           .\vendor\diskuv-ocaml\installtime\windows\setup-userprofile.ps1 -SkipProgress -AllowRunAsAdmin -ForceDeploymentSlot0 -MSYS2Dir C:\msys64
           $SetupExitCode = $LastExitCode
-          if ($SetupExitCode -ne 0) {
+          if ($SetupExitCode -ne 0) { # TODO: This could be part of something like: setup-userprofile.ps1 -PrintLogsOnError
             Write-Host "`n`n========= [START OF TROUBLESHOOTING] ===========`n`n"
             Get-ChildItem -Path "$env:LOCALAPPDATA\opam\log\*" -Include "*.env", "*.out" -Exclude "log-*.out", "log-*.env" | ForEach-Object { Write-Host "`n`n========= [TROUBLESHOOTING] $($_.FullName) ===========`n`n"; Get-Content -Path $_.FullName }
 
@@ -119,10 +119,34 @@ jobs:
             ${{ runner.os }}-
 
       - name: ./makeit build-dev
-        run: ./makeit build-dev DKML_BUILD_TRACE=ON
+        run: |
+          $ErrorActionPreference = "Continue"
+          ./makeit build-dev DKML_BUILD_TRACE=ON
+          $SetupExitCode = $LastExitCode
+          if ($SetupExitCode -ne 0) { # TODO: This could be part of something like: ./makeit DKML_BUILD_PRINT_LOGS_ON_ERROR=ON
+            Write-Host "`n`n========= [START OF TROUBLESHOOTING] ===========`n`n"
+            Get-ChildItem -Path "$env:LOCALAPPDATA\opam\log\*" -Include "*.env", "*.out" -Exclude "log-*.out", "log-*.env" | ForEach-Object { Write-Host "`n`n========= [TROUBLESHOOTING] $($_.FullName) ===========`n`n"; Get-Content -Path $_.FullName }
+
+            # The next line is really an example ... if you need access to an extra log file that is produced by an Opam package's build scripts, then copy and paste the next line
+            if (Test-Path "$env:LOCALAPPDATA\Programs\DiskuvOCaml\0\system\_opam\.opam-switch\build\ocamlfind.1.9.1\ocargs.log") { Write-Host "`n`n=========== [TROUBLESHOOTING] ocargs.log ==========="; Get-Content -Path "$env:LOCALAPPDATA\Programs\DiskuvOCaml\0\system\_opam\.opam-switch\build\ocamlfind.1.9.1\ocargs.log"; }
+
+            throw "./makeit build-dev failed with exit code $SetupExitCode. Scroll up to see the [TROUBLESHOOTING] logs that begin at the [START OF TROUBLESHOOTING] line"
+          }
 
       - name: ./makeit test
-        run: ./makeit test DKML_BUILD_TRACE=ON
+        run: |
+          $ErrorActionPreference = "Continue"
+          ./makeit test DKML_BUILD_TRACE=ON
+          $SetupExitCode = $LastExitCode
+          if ($SetupExitCode -ne 0) { # TODO: This could be part of something like: ./makeit DKML_BUILD_PRINT_LOGS_ON_ERROR=ON
+            Write-Host "`n`n========= [START OF TROUBLESHOOTING] ===========`n`n"
+            Get-ChildItem -Path "$env:LOCALAPPDATA\opam\log\*" -Include "*.env", "*.out" -Exclude "log-*.out", "log-*.env" | ForEach-Object { Write-Host "`n`n========= [TROUBLESHOOTING] $($_.FullName) ===========`n`n"; Get-Content -Path $_.FullName }
+
+            # The next line is really an example ... if you need access to an extra log file that is produced by an Opam package's build scripts, then copy and paste the next line
+            if (Test-Path "$env:LOCALAPPDATA\Programs\DiskuvOCaml\0\system\_opam\.opam-switch\build\ocamlfind.1.9.1\ocargs.log") { Write-Host "`n`n=========== [TROUBLESHOOTING] ocargs.log ==========="; Get-Content -Path "$env:LOCALAPPDATA\Programs\DiskuvOCaml\0\system\_opam\.opam-switch\build\ocamlfind.1.9.1\ocargs.log"; }
+
+            throw "./makeit build-dev failed with exit code $SetupExitCode. Scroll up to see the [TROUBLESHOOTING] logs that begin at the [START OF TROUBLESHOOTING] line"
+          }
 
       - name: ./makeit dkml-report
         run: ./makeit dkml-report DKML_BUILD_TRACE=ON
