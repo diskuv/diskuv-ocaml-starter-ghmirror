@@ -72,11 +72,11 @@ jobs:
           retention-days: 1
 
   Build-And-Test:
-    # strategy:
-    #   matrix:
-    #     arch:
-    #       - x64     # 64-bit host for 64-bit target
-    #       - x64_x86 # 64-bit host for 32-bit target
+    strategy:
+      matrix:
+        platform:
+          - windows_x86
+          - windows_x86_64
     runs-on: windows-2019
     needs: Install-Diskuv-OCaml
     steps:
@@ -121,13 +121,13 @@ jobs:
         run: |
           echo "$env:LOCALAPPDATA\Programs\DiskuvOCaml\0\bin" >> $env:GITHUB_PATH
 
-      - name: ./makeit build-dev
+      - name: ./makeit build-${{ matrix.platform }}
         run: |
           $env:PATH
           $env:PATH = "$env:LOCALAPPDATA\Programs\DiskuvOCaml\0\bin;$env:PATH"
           $env:PATH
           $ErrorActionPreference = "Continue"
-          ./makeit build-dev DKML_BUILD_TRACE=ON
+          ./makeit build-${{ matrix.platform }} DKML_BUILD_TRACE=ON
           $SetupExitCode = $LastExitCode
           if ($SetupExitCode -ne 0) { # TODO: This could be part of something like: ./makeit DKML_BUILD_PRINT_LOGS_ON_ERROR=ON
             Write-Host "`n`n========= [START OF TROUBLESHOOTING] ===========`n`n"
@@ -136,7 +136,7 @@ jobs:
             # The next line is really an example ... if you need access to an extra log file that is produced by an Opam package's build scripts, then copy and paste the next line
             if (Test-Path "$env:LOCALAPPDATA\Programs\DiskuvOCaml\0\system\_opam\.opam-switch\build\ocamlfind.1.9.1\ocargs.log") { Write-Host "`n`n=========== [TROUBLESHOOTING] ocargs.log ==========="; Get-Content -Path "$env:LOCALAPPDATA\Programs\DiskuvOCaml\0\system\_opam\.opam-switch\build\ocamlfind.1.9.1\ocargs.log"; }
 
-            throw "./makeit build-dev failed with exit code $SetupExitCode. Scroll up to see the [TROUBLESHOOTING] logs that begin at the [START OF TROUBLESHOOTING] line"
+            throw "'./makeit build-${{ matrix.platform }}' failed with exit code $SetupExitCode. Scroll up to see the [TROUBLESHOOTING] logs that begin at the [START OF TROUBLESHOOTING] line"
           }
 
       - name: ./makeit test
@@ -151,7 +151,7 @@ jobs:
             # The next line is really an example ... if you need access to an extra log file that is produced by an Opam package's build scripts, then copy and paste the next line
             if (Test-Path "$env:LOCALAPPDATA\Programs\DiskuvOCaml\0\system\_opam\.opam-switch\build\ocamlfind.1.9.1\ocargs.log") { Write-Host "`n`n=========== [TROUBLESHOOTING] ocargs.log ==========="; Get-Content -Path "$env:LOCALAPPDATA\Programs\DiskuvOCaml\0\system\_opam\.opam-switch\build\ocamlfind.1.9.1\ocargs.log"; }
 
-            throw "./makeit build-dev failed with exit code $SetupExitCode. Scroll up to see the [TROUBLESHOOTING] logs that begin at the [START OF TROUBLESHOOTING] line"
+            throw "'./makeit test' failed with exit code $SetupExitCode. Scroll up to see the [TROUBLESHOOTING] logs that begin at the [START OF TROUBLESHOOTING] line"
           }
 
       - name: ./makeit dkml-report
