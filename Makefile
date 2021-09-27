@@ -11,6 +11,10 @@ DKML_DIR = vendor/diskuv-ocaml
 # Verbose tracing of each command. Either ON or OFF
 DKML_BUILD_TRACE = OFF
 
+# The platforms your OCaml application (or library) supports.
+# Diskuv OCaml supports windows_x86_64. The list of platforms may expand in the future.
+DKML_PLATFORMS = windows_x86_64
+
 # The names of the Opam packages (without the .opam suffix). No platform-specific packages belongs here.
 OPAM_PKGS_CROSSPLATFORM = starter
 
