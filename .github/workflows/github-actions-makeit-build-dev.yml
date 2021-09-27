@@ -19,11 +19,7 @@ jobs:
             Programs-DiskuvOCaml.7z
             vcpkg.7z
             opam-root.7z
-          key: ${{ runner.os }}-setup-${{ env.cache-name }}-dkml-${{ hashFiles('**/.dkmlroot') }}
-          restore-keys: |
-            ${{ runner.os }}-setup-${{ env.cache-name }}-
-            ${{ runner.os }}-setup-
-            ${{ runner.os }}-
+          key: ${{ runner.os }}-setup-${{ env.cache-name }}-dkml-${{ hashFiles('**/.dkmlroot') }}-submodule-${{ hashFiles('.git/modules/**/diskuv-ocaml/HEAD') }}
 
       - name: Setup CI Container/Virtual Machine for Diskuv OCaml
         if: steps.cache_diskuvocaml_archives.outputs.cache-hit != 'true'
@@ -112,7 +108,7 @@ jobs:
         with:
           path: |
             build/*/*/_opam
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-dkml-${{ hashFiles('**/.dkmlroot') }}-opam-${{ hashFiles('**/.opam', '**/opam', '**.opam.lock', '**.opam.locked') }}
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-dkml-${{ hashFiles('**/.dkmlroot') }}-submodule-${{ hashFiles('.git/modules/**/diskuv-ocaml/HEAD') }}-opam-${{ hashFiles('**/.opam', '**/opam', '**.opam.lock', '**.opam.locked') }}
           restore-keys: |
             ${{ runner.os }}-build-${{ env.cache-name }}-
             ${{ runner.os }}-build-
