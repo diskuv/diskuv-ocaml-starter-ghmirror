@@ -114,8 +114,18 @@ jobs:
             ${{ runner.os }}-build-
             ${{ runner.os }}-
 
+      - name: Add Diskuv System PATH
+        # On desktop the Diskuv System PATH would be present (the installer asks the user to close all shells sessions and start again);
+        # need to make sure the same thing happens in CI. Actually, since the installer is in the previous job, the System PATH is lost as
+        # we are now in a subsequent job.
+        run: |
+          echo "$env:LOCALAPPDATA\Programs\DiskuvOCaml\0\bin" >> $env:GITHUB_PATH
+
       - name: ./makeit build-dev
         run: |
+          $env:PATH
+          $env:PATH = "$env:LOCALAPPDATA\Programs\DiskuvOCaml\0\bin;$env:PATH"
+          $env:PATH
           $ErrorActionPreference = "Continue"
           ./makeit build-dev DKML_BUILD_TRACE=ON
           $SetupExitCode = $LastExitCode
