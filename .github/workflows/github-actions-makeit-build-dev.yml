@@ -150,5 +150,3 @@ jobs:
 
       - name: ./makeit dkml-report
         run: ./makeit dkml-report DKML_BUILD_TRACE=ON
-
-      - run: echo "🍏 This job's status is ${{ job.status }}."
