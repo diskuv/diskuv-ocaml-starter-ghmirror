@@ -73,10 +73,11 @@ jobs:
 
   Build-And-Test:
     strategy:
+      fail-fast: false
       matrix:
         platform:
-          - windows_x86_64
           - windows_x86
+          - windows_x86_64
     runs-on: windows-2019
     needs: Install-Diskuv-OCaml
     steps:
