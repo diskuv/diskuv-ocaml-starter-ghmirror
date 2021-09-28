@@ -4,6 +4,20 @@ jobs:
   Install-Diskuv-OCaml:
     runs-on: windows-2019
     steps:
+      - name: Filesystem Diagnostics
+        # Without NTFS we will not get atomic file renames, and the errors at https://github.com/ocaml/ocaml/pull/1307 will occur.
+        # On Windows here are a couple examples:
+        #       ocamlc ocaml-lsp-server/vendor/merlin/src/dot-merlin/dot-protocol/.merlin_dot_protocol.objs/byte/dot_protocol.{cmi,cmti} (exit 2)
+        #   (cd _build/default && D:\a\diskuv-ocaml-starter-ghmirror\diskuv-ocaml-starter-ghmirror\build\dev\Debug\_opam\bin\ocamlc.opt.exe -w -40 -w -a -g -bin-annot -I ocaml-lsp-server/vendor/merlin/src/dot-merlin/dot-protocol/.merlin_dot_protocol.objs/byte -I D:\a\diskuv-ocaml-starter-ghmirror\diskuv-ocaml-starter-ghmirror\build\dev\Debug\_opam\lib\csexp -I D:\a\diskuv-ocaml-starter-ghmirror\diskuv-oc[...]
+        #   File "ocaml-lsp-server/vendor/merlin/src/dot-merlin/dot-protocol/dot_protocol.mli", line 1:
+        #   Error: I/O error: ocaml-lsp-server/vendor/merlin/src/dot-merlin/dot-protocol/.merlin_dot_protocol.objs/byte\dot_protocol.cmi767a52.tmp: No such file or directory
+        # and
+        #       ocamlc expander/.ppx_sexp_conv_expander.objs/byte/ppx_sexp_conv_expander__Str_generate_sexp_grammar.{cmi,cmti} (exit 2)
+        #   (cd _build/default && D:\a\diskuv-ocaml-starter-ghmirror\diskuv-ocaml-starter-ghmirror\build\windows_x86_64\Release\_opam\bin\ocamlc.opt.exe -w -40 -g -bin-annot -I expander/.ppx_sexp_conv_expander.objs/byte -I D:/a/diskuv-ocaml-starter-ghmirror/diskuv-ocaml-starter-ghmirror/build/windows_x86_64/Release/_opam/lib/ocaml\compiler-libs -I D:\a\diskuv-ocaml-starter-ghmirror\diskuv-ocaml-starter-g[...]
+        #   File "expander/str_generate_sexp_grammar.mli", line 1:
+        #   Error: I/O error: expander/.ppx_sexp_conv_expander.objs/byte\ppx_sexp_conv_expander__Str_generate_sexp_grammar.cmibe78ba.tmp: No such file or directory
+        run: Get-Volume
+
       - name: Check out repository code
         uses: actions/checkout@v2
         with:
