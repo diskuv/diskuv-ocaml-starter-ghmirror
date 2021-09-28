@@ -41,7 +41,7 @@ jobs:
           $global:RedeployIfExists = $true
           $global:IncrementalDiskuvOcamlDeployment = $true
           $ErrorActionPreference = "Continue"
-          .\vendor\diskuv-ocaml\installtime\windows\setup-userprofile.ps1 -SkipProgress -AllowRunAsAdmin -ForceDeploymentSlot0 -MSYS2Dir C:\msys64
+          .\vendor\diskuv-ocaml\installtime\windows\setup-userprofile.ps1 -SkipProgress -AllowRunAsAdmin -ForceDeploymentSlot0 -Flavor CI -MSYS2Dir C:\msys64
           $SetupExitCode = $LastExitCode
           if ($SetupExitCode -ne 0) { # TODO: This could be part of something like: setup-userprofile.ps1 -PrintLogsOnError
             Write-Host "`n`n========= [START OF TROUBLESHOOTING] ===========`n`n"
