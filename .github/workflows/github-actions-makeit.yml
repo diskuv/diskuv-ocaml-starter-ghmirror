@@ -75,8 +75,8 @@ jobs:
     strategy:
       matrix:
         platform:
-          - windows_x86
           - windows_x86_64
+          - windows_x86
     runs-on: windows-2019
     needs: Install-Diskuv-OCaml
     steps:
