@@ -136,11 +136,13 @@ jobs:
         run: |
           echo "$env:LOCALAPPDATA\Programs\DiskuvOCaml\0\bin" >> $env:GITHUB_PATH
 
+      - name: Troubleshooting (example)
+        if: "false" # change to "true" when you want to need to troubleshoot a package. Change the example script as well.
+        run: |
+          ./makeit shell SHELL_SCRIPTFILE=.github/workflows/troubleshoot-example-ppx_sexp_conv.sh
+
       - name: ./makeit build-${{ matrix.platform }}-Release
         run: |
-          $env:PATH
-          $env:PATH = "$env:LOCALAPPDATA\Programs\DiskuvOCaml\0\bin;$env:PATH"
-          $env:PATH
           $ErrorActionPreference = "Continue"
           ./makeit build-${{ matrix.platform }}-Release DKML_BUILD_TRACE=ON
           $SetupExitCode = $LastExitCode
