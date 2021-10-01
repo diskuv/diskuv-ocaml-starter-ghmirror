@@ -143,33 +143,11 @@ jobs:
 
       - name: ./makeit build-${{ matrix.platform }}-Release
         run: |
-          $ErrorActionPreference = "Continue"
-          ./makeit build-${{ matrix.platform }}-Release DKML_BUILD_TRACE=ON
-          $SetupExitCode = $LastExitCode
-          if ($SetupExitCode -ne 0) { # TODO: This could be part of something like: ./makeit DKML_BUILD_PRINT_LOGS_ON_ERROR=ON
-            Write-Host "`n`n========= [START OF TROUBLESHOOTING] ===========`n`n"
-            Get-ChildItem -Path "$env:LOCALAPPDATA\opam\log\*" -Include "*.env", "*.out" -Exclude "log-*.out", "log-*.env" | ForEach-Object { Write-Host "`n`n========= [TROUBLESHOOTING] $($_.FullName) ===========`n`n"; Get-Content -Path $_.FullName }
-
-            # The next line is really an example ... if you need access to an extra log file that is produced by an Opam package's build scripts, then copy and paste the next line
-            if (Test-Path "$env:LOCALAPPDATA\Programs\DiskuvOCaml\0\system\_opam\.opam-switch\build\ocamlfind.1.9.1\ocargs.log") { Write-Host "`n`n=========== [TROUBLESHOOTING] ocargs.log ==========="; Get-Content -Path "$env:LOCALAPPDATA\Programs\DiskuvOCaml\0\system\_opam\.opam-switch\build\ocamlfind.1.9.1\ocargs.log"; }
-
-            throw "'./makeit build-${{ matrix.platform }}-Release' failed with exit code $SetupExitCode. Scroll up to see the [TROUBLESHOOTING] logs that begin at the [START OF TROUBLESHOOTING] line"
-          }
+          ./makeit build-${{ matrix.platform }}-Release DKML_BUILD_TRACE=ON DKML_BUILD_PRINT_LOGS_ON_ERROR=ON
 
       - name: ./makeit test
         run: |
-          $ErrorActionPreference = "Continue"
-          ./makeit test DKML_BUILD_TRACE=ON
-          $SetupExitCode = $LastExitCode
-          if ($SetupExitCode -ne 0) { # TODO: This could be part of something like: ./makeit DKML_BUILD_PRINT_LOGS_ON_ERROR=ON
-            Write-Host "`n`n========= [START OF TROUBLESHOOTING] ===========`n`n"
-            Get-ChildItem -Path "$env:LOCALAPPDATA\opam\log\*" -Include "*.env", "*.out" -Exclude "log-*.out", "log-*.env" | ForEach-Object { Write-Host "`n`n========= [TROUBLESHOOTING] $($_.FullName) ===========`n`n"; Get-Content -Path $_.FullName }
-
-            # The next line is really an example ... if you need access to an extra log file that is produced by an Opam package's build scripts, then copy and paste the next line
-            if (Test-Path "$env:LOCALAPPDATA\Programs\DiskuvOCaml\0\system\_opam\.opam-switch\build\ocamlfind.1.9.1\ocargs.log") { Write-Host "`n`n=========== [TROUBLESHOOTING] ocargs.log ==========="; Get-Content -Path "$env:LOCALAPPDATA\Programs\DiskuvOCaml\0\system\_opam\.opam-switch\build\ocamlfind.1.9.1\ocargs.log"; }
-
-            throw "'./makeit test' failed with exit code $SetupExitCode. Scroll up to see the [TROUBLESHOOTING] logs that begin at the [START OF TROUBLESHOOTING] line"
-          }
+          ./makeit test DKML_BUILD_TRACE=ON DKML_BUILD_PRINT_LOGS_ON_ERROR=ON
 
       - name: ./makeit dkml-report
         run: ./makeit dkml-report DKML_BUILD_TRACE=ON
