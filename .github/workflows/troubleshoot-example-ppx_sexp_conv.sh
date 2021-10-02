@@ -22,12 +22,12 @@ PATH=$(echo "$PATH" | PATH="/usr/bin:/bin:$PATH" sed 's#/:#:#g; s#/$##')
 # called directly in a CI build.
 if [ -n "${OPAMROOTDIR_BUILDHOST:-}" ] && [ -n "${OPAMSWITCHNAME_BUILDHOST:-}" ]; then
     # shellcheck disable=SC2046
-    eval $(opam env --root "$OPAMROOTDIR_BUILDHOST" --switch "$OPAMSWITCHNAME_BUILDHOST" --set-root --set-switch)
+    eval $(opam env --root "$OPAMROOTDIR_BUILDHOST" --switch "$OPAMSWITCHNAME_BUILDHOST" --set-root --set-switch | awk '{ sub(/\r$/,""); print }')
 elif [ -z "${OPAMSWITCH:-}" ]; then
     # We are being called directly in a CI build.
     # Use the system switch as a pre-existing switch that has an installed OCaml compiler base package.
     # shellcheck disable=SC2046
-    eval $(opam env --switch "$LOCALAPPDATA\\Programs\\DiskuvOCaml\\0\\system" --set-switch)
+    eval $(opam env --switch "$LOCALAPPDATA\\Programs\\DiskuvOCaml\\0\\system" --set-switch | awk '{ sub(/\r$/,""); print }')
 fi
 opam switch
 
