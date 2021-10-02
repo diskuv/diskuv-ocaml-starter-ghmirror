@@ -14,6 +14,10 @@ which dune
 which opam
 opam env
 
+# Remove trailing slashes, if any, from PATH which can be expanded to include double quotes that
+# interfere with Microsoft's vsdevcmd.bat
+PATH=$(echo "$PATH" | PATH="/usr/bin:/bin:$PATH" sed 's#/:#:#g; s#/$##')
+
 # When called as a troubleshooting hook, then OPAMROOTDIR_BUILDHOST and OPAMSWITCHNAME_BUILDHOST will be set. Otherwise we are being
 # called directly in a CI build.
 if [ -n "${OPAMROOTDIR_BUILDHOST:-}" ] && [ -n "${OPAMSWITCHNAME_BUILDHOST:-}" ]; then
