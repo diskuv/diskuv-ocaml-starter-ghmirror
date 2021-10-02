@@ -14,9 +14,12 @@ which dune
 which opam
 opam env
 
-# When called as a troubleshooting hook, then OPAMSWITCH will already be set. Otherwise we are being
+# When called as a troubleshooting hook, then OPAMSWITCHNAME_BUILDHOST will be set. Otherwise we are being
 # called directly in a CI build.
-if [ -z "${OPAMSWITCH:-}" ]; then
+if [ -n "${OPAMSWITCHNAME_BUILDHOST:-}" ]; then
+    # shellcheck disable=SC2046
+    eval $(opam env --switch "$OPAMSWITCHNAME_BUILDHOST" --set-switch)
+elif [ -z "${OPAMSWITCH:-}" ]; then
     # We are being called directly in a CI build.
     # Use the system switch as a pre-existing switch that has an installed OCaml compiler base package.
     # shellcheck disable=SC2046
