@@ -50,6 +50,7 @@ set +f # Turn on file globbing so we can do wildcards ('*').
 # --------------------
 
 set -x
+export MSYS2_ARG_CONV_EXCL='*'                                  # Mimic setting inside `opam install`
 cd _ci/troubleshoot
 autodetect_compiler launch-compiler.sh                          # Create a script to launch a program within an environment containing the compiler (MSVC, etc.)
 opam source ppx_sexp_conv                                       # Get the source code for package; version from the Opam switch (ex. pinned package)
