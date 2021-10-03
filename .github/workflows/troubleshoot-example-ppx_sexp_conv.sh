@@ -58,4 +58,8 @@ opam source ppx_sexp_conv                                       # Get the source
 cd ppx_sexp_conv.*
 tail -v -n5000 ./*opam                                          # Pretty print all the Opam packages
 opam install ./*opam --deps-only --yes                          # Install all the dependencies of the packages
-../launch-compiler.sh dune build -p ppx_sexp_conv -j1 --verbose # This is the first statement in ppx_sexp_conv.opam build:[] block, except we want verbose to see what is happening
+env
+dune build -p ppx_sexp_conv -j1 --verbose                       # This is the first statement in ppx_sexp_conv.opam build:[] block, except we want verbose to see what is happening
+
+sed -i 's/"-p" name/"--verbose" "-p" name/g' ./*opam            # Force Dune commands to be verbose
+opam install ./*opam --best-effort --yes                        # Install the packages
