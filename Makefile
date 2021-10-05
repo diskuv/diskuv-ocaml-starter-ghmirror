@@ -12,9 +12,11 @@ DKML_DIR = vendor/diskuv-ocaml
 DKML_BUILD_TRACE = OFF
 
 # The platforms your OCaml application (or library) supports.
-# Diskuv OCaml supports windows_x86 (32-bit Windows) and windows_x86_64 (64-bit Windows).
+# Diskuv OCaml supports windows_x86_64 (64-bit Windows).
+# There is no support for windows_x86 (32-bit Windows), darwin_x86_64 (Mac Intel),
+# and darwin_arm64 (Mac M1), although those platforms may work with some packages.
 # The list of platforms may expand in the future.
-DKML_PLATFORMS = windows_x86 windows_x86_64
+DKML_PLATFORMS = windows_x86_64 windows_x86 darwin_x86_64 darwin_arm64
 
 # The names of the Opam packages (without the .opam suffix). No platform-specific packages belongs here.
 OPAM_PKGS_CROSSPLATFORM = starter
