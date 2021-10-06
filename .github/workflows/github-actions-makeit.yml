@@ -1,7 +1,7 @@
 name: makeit Actions
 on: [push]
 jobs:
-  Windows-Install-Diskuv-OCaml:
+  Win32-Install-DKML:
     runs-on: windows-2019
     steps:
       - name: Check out repository code
@@ -71,15 +71,18 @@ jobs:
             opam-root.7z
           retention-days: 1
 
-  Windows-Build-And-Test:
+  Win32-Build:
     strategy:
-      fail-fast: false
       matrix:
         platform:
-          - windows_x86
           - windows_x86_64
+        experimental: [false]
+        include:
+          - platform: windows_x86
+            experimental: true
     runs-on: windows-2019
-    needs: Windows-Install-Diskuv-OCaml
+    continue-on-error: ${{ matrix.experimental }}
+    needs: Win32-Install-DKML
     steps:
       - name: Check out repository code
         uses: actions/checkout@v2
@@ -134,7 +137,7 @@ jobs:
       - name: ./makeit dkml-report
         run: ./makeit dkml-report DKML_BUILD_TRACE=ON
 
-  Unix-Build-And-Test:
+  Unix-Build:
     strategy:
       fail-fast: false
       matrix:
