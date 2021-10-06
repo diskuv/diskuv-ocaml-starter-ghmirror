@@ -1,23 +1,9 @@
 name: makeit Actions
 on: [push]
 jobs:
-  Install-Diskuv-OCaml:
+  Windows-Install-Diskuv-OCaml:
     runs-on: windows-2019
     steps:
-      - name: Filesystem Diagnostics
-        # Without NTFS we will not get atomic file renames, and the errors at https://github.com/ocaml/ocaml/pull/1307 will occur.
-        # On Windows here are a couple examples:
-        #       ocamlc ocaml-lsp-server/vendor/merlin/src/dot-merlin/dot-protocol/.merlin_dot_protocol.objs/byte/dot_protocol.{cmi,cmti} (exit 2)
-        #   (cd _build/default && D:\a\diskuv-ocaml-starter-ghmirror\diskuv-ocaml-starter-ghmirror\build\dev\Debug\_opam\bin\ocamlc.opt.exe -w -40 -w -a -g -bin-annot -I ocaml-lsp-server/vendor/merlin/src/dot-merlin/dot-protocol/.merlin_dot_protocol.objs/byte -I D:\a\diskuv-ocaml-starter-ghmirror\diskuv-ocaml-starter-ghmirror\build\dev\Debug\_opam\lib\csexp -I D:\a\diskuv-ocaml-starter-ghmirror\diskuv-oc[...]
-        #   File "ocaml-lsp-server/vendor/merlin/src/dot-merlin/dot-protocol/dot_protocol.mli", line 1:
-        #   Error: I/O error: ocaml-lsp-server/vendor/merlin/src/dot-merlin/dot-protocol/.merlin_dot_protocol.objs/byte\dot_protocol.cmi767a52.tmp: No such file or directory
-        # and
-        #       ocamlc expander/.ppx_sexp_conv_expander.objs/byte/ppx_sexp_conv_expander__Str_generate_sexp_grammar.{cmi,cmti} (exit 2)
-        #   (cd _build/default && D:\a\diskuv-ocaml-starter-ghmirror\diskuv-ocaml-starter-ghmirror\build\windows_x86_64\Release\_opam\bin\ocamlc.opt.exe -w -40 -g -bin-annot -I expander/.ppx_sexp_conv_expander.objs/byte -I D:/a/diskuv-ocaml-starter-ghmirror/diskuv-ocaml-starter-ghmirror/build/windows_x86_64/Release/_opam/lib/ocaml\compiler-libs -I D:\a\diskuv-ocaml-starter-ghmirror\diskuv-ocaml-starter-g[...]
-        #   File "expander/str_generate_sexp_grammar.mli", line 1:
-        #   Error: I/O error: expander/.ppx_sexp_conv_expander.objs/byte\ppx_sexp_conv_expander__Str_generate_sexp_grammar.cmibe78ba.tmp: No such file or directory
-        run: Get-Volume
-
       - name: Check out repository code
         uses: actions/checkout@v2
         with:
@@ -85,7 +71,7 @@ jobs:
             opam-root.7z
           retention-days: 1
 
-  Build-And-Test:
+  Windows-Build-And-Test:
     strategy:
       fail-fast: false
       matrix:
@@ -93,7 +79,7 @@ jobs:
           - windows_x86
           - windows_x86_64
     runs-on: windows-2019
-    needs: Install-Diskuv-OCaml
+    needs: Windows-Install-Diskuv-OCaml
     steps:
       - name: Check out repository code
         uses: actions/checkout@v2
@@ -124,10 +110,6 @@ jobs:
           path: |
             build/*/*/_opam
           key: ${{ runner.os }}-build-${{ env.cache-name }}-dkml-${{ hashFiles('**/.dkmlroot') }}-submodule-${{ hashFiles('.git/modules/**/diskuv-ocaml/HEAD') }}-opam-${{ hashFiles('**/.opam', '**/opam', '**.opam.lock', '**.opam.locked') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-
-            ${{ runner.os }}-build-
-            ${{ runner.os }}-
 
       - name: Add Diskuv System PATH
         # On desktop the Diskuv System PATH would be present (the installer asks the user to close all shells sessions and start again);
@@ -135,6 +117,52 @@ jobs:
         # we are now in a subsequent job.
         run: |
           echo "$env:LOCALAPPDATA\Programs\DiskuvOCaml\0\bin" >> $env:GITHUB_PATH
+
+      - name: Troubleshooting (example)
+        if: "false" # change to "true" when you want to need to troubleshoot a package. Change the example script as well.
+        run: |
+          ./makeit shell SHELL_SCRIPTFILE=.github/workflows/troubleshoot-example-ppx_sexp_conv.sh
+
+      - name: ./makeit build-${{ matrix.platform }}-Release
+        run: |
+          ./makeit build-${{ matrix.platform }}-Release DKML_BUILD_TRACE=ON DKML_BUILD_PRINT_LOGS_ON_ERROR=ON DKML_TROUBLESHOOTING_HOOK=.github/workflows/troubleshoot-example-ppx_sexp_conv.sh
+
+      - name: ./makeit test
+        run: |
+          ./makeit test DKML_BUILD_TRACE=ON DKML_BUILD_PRINT_LOGS_ON_ERROR=ON
+
+      - name: ./makeit dkml-report
+        run: ./makeit dkml-report DKML_BUILD_TRACE=ON
+
+  Unix-Build-And-Test:
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - darwin_x86_64
+        include:
+          - platform: darwin_x86_64
+            os: macos-11
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+
+      - name: Install Opam on macOS
+        run: brew install gpatch && brew install opam
+        if: ${{ startsWith(matrix.platform, 'darwin_') }}
+
+      - name: Cache Opam Switches
+        id: cache_opam_switches
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-opam-${{ matrix.platform }}-switches
+        with:
+          path: |
+            build/*/*/_opam
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-dkml-${{ hashFiles('**/.dkmlroot') }}-submodule-${{ hashFiles('.git/modules/**/diskuv-ocaml/HEAD') }}-opam-${{ hashFiles('**/.opam', '**/opam', '**.opam.lock', '**.opam.locked') }}
 
       - name: Troubleshooting (example)
         if: "false" # change to "true" when you want to need to troubleshoot a package. Change the example script as well.
