@@ -114,6 +114,12 @@ jobs:
             build/*/*/_opam
           key: ${{ runner.os }}-build-${{ env.cache-name }}-dkml-${{ hashFiles('**/.dkmlroot') }}-submodule-${{ hashFiles('.git/modules/**/diskuv-ocaml/HEAD') }}-opam-${{ hashFiles('**/.opam', '**/opam', '**.opam.lock', '**.opam.locked') }}
 
+      - name: Install MSYS2 packages # The cache will not restore C:\msys64 packages
+        run: |
+          $env:PSModulePath += "$([System.IO.Path]::PathSeparator)vendor\diskuv-ocaml\installtime\windows"
+          Import-Module DeploymentVersion # Get $DV_ variables
+          & C:\msys64\usr\bin\env.exe MSYSTEM=MSYS /usr/bin/bash -lc ("pacman -S --needed --noconfirm " + ($DV_MSYS2PackagesArch -join " "))
+
       - name: Add Diskuv System PATH
         # On desktop the Diskuv System PATH would be present (the installer asks the user to close all shells sessions and start again);
         # need to make sure the same thing happens in CI. Actually, since the installer is in the previous job, the System PATH is lost as
