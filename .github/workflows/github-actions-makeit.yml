@@ -1,5 +1,9 @@
 name: makeit Actions
 on: [push]
+env:
+  DKML_BUILD_TRACE: "ON"
+  DKML_BUILD_TRACE_LEVEL: "0" # Used only if DKML_BUILD_TRACE is ON. Higher is more verbose; "0" and "2" are the only values.
+  DKML_BUILD_PRINT_LOGS_ON_ERROR: "ON"
 jobs:
   Win32-Install-DKML:
     runs-on: windows-2019
@@ -37,6 +41,8 @@ jobs:
 
       - name: Setup CI User for Diskuv OCaml
         if: steps.cache_diskuvocaml_archives.outputs.cache-hit != 'true'
+        env:
+          DKML_BUILD_ROOT: ${{ runner.temp }} # Use short build directory to avoid Windows 260-character absolute path limit
         run: |
           # Strip PATH of all extraneous GitHub Actions programs except Git which is required for setup-userprofile.ps1
           $env:PATH=("C:\Program Files\Git\cmd;C:\Windows\System32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0")
@@ -87,6 +93,8 @@ jobs:
           - platform: windows_x86
             experimental: true
     runs-on: windows-2019
+    env:
+      DKML_BUILD_TRACE_LEVEL: "2" # For checking 260-character limit problems
     continue-on-error: ${{ matrix.experimental }}
     needs: Win32-Install-DKML
     steps:
@@ -135,19 +143,29 @@ jobs:
 
       - name: Troubleshooting (example)
         if: "false" # change to "true" when you want to need to troubleshoot a package. Change the example script as well.
+        env:
+          DKML_BUILD_ROOT: ${{ runner.temp }} # Use short build directory to avoid Windows 260-character absolute path limit
         run: |
           ./makeit shell SHELL_SCRIPTFILE=.github/workflows/troubleshoot-example-ppx_sexp_conv.sh
 
       - name: ./makeit build-${{ matrix.platform }}-Release
+        env:
+          DKML_BUILD_ROOT: ${{ runner.temp }} # Use short build directory to avoid Windows 260-character absolute path limit
         run: |
-          ./makeit build-${{ matrix.platform }}-Release DKML_BUILD_TRACE=ON DKML_BUILD_TRACE_LEVEL=2 DKML_BUILD_PRINT_LOGS_ON_ERROR=ON DKML_TROUBLESHOOTING_HOOK=.github/workflows/troubleshoot-example-ppx_sexp_conv.sh
+          echo "DKML_BUILD_ROOT = $env:DKML_BUILD_ROOT"
+          ./makeit build-${{ matrix.platform }}-Release DKML_TROUBLESHOOTING_HOOK=.github/workflows/troubleshoot-example-ppx_sexp_conv.sh
 
       - name: ./makeit test
+        env:
+          DKML_BUILD_ROOT: ${{ runner.temp }} # Use short build directory to avoid Windows 260-character absolute path limit
         run: |
-          ./makeit test DKML_BUILD_TRACE=ON DKML_BUILD_PRINT_LOGS_ON_ERROR=ON
+          ./makeit test
 
       - name: ./makeit dkml-report
-        run: ./makeit dkml-report DKML_BUILD_TRACE=ON
+        env:
+          DKML_BUILD_ROOT: ${{ runner.temp }} # Use short build directory to avoid Windows 260-character absolute path limit
+        run: |
+          ./makeit dkml-report
 
   Unix-Build:
     strategy:
@@ -186,11 +204,11 @@ jobs:
 
       - name: ./makeit build-${{ matrix.platform }}-Release
         run: |
-          ./makeit build-${{ matrix.platform }}-Release DKML_BUILD_TRACE=ON DKML_BUILD_PRINT_LOGS_ON_ERROR=ON DKML_TROUBLESHOOTING_HOOK=.github/workflows/troubleshoot-example-ppx_sexp_conv.sh
+          ./makeit build-${{ matrix.platform }}-Release DKML_TROUBLESHOOTING_HOOK=.github/workflows/troubleshoot-example-ppx_sexp_conv.sh
 
       - name: ./makeit test
         run: |
-          ./makeit test DKML_BUILD_TRACE=ON DKML_BUILD_PRINT_LOGS_ON_ERROR=ON
+          ./makeit test
 
       - name: ./makeit dkml-report
-        run: ./makeit dkml-report DKML_BUILD_TRACE=ON
+        run: ./makeit dkml-report
