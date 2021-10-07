@@ -67,4 +67,5 @@ opam install ./*opam --deps-only --yes                          # Install all th
 "$WRAP" dune build -p ppx_sexp_conv -j1 --verbose               # This is the first statement in ppx_sexp_conv.opam build:[] block, except we want verbose to see what is happening
 
 sed -i 's/"-p" name/"--verbose" "-p" name/g' ./*opam            # Force Dune commands to be verbose
+sed -i 's/version: "v0.14.0"/version: "v0.14.3"/g' ./*opam      # Fix bug with .opam in the v0.14.3 https://github.com/fdopen/opam-repository-mingw/blob/opam2/packages/ppx_sexp_conv/ppx_sexp_conv.v0.14.3/opam being v0.14.0 instead of v0.14.3
 PATH=/usr/bin:"$PATH" opam install ./*opam --best-effort --yes  # Install the packages
