@@ -12,10 +12,7 @@ pwd
 which dune
 which opam
 opam env
-
-# Pull in utilities for getting compiler
-# shellcheck disable=SC1091
-. vendor/diskuv-ocaml/etc/contexts/linux-build/crossplatform-functions.sh
+env
 
 # Ensure a clean directory (in case this script is called repeatedly)
 install -d _ci/troubleshoot
@@ -41,7 +38,9 @@ opam switch
 
 # More diagnostics
 which dune
+which rsync
 opam var
+opam option
 
 set +f # Turn on file globbing so we can do wildcards ('*').
 
@@ -49,17 +48,23 @@ set +f # Turn on file globbing so we can do wildcards ('*').
 # Real troubleshooting
 # --------------------
 
+# Windows binary that sets the MSVC compiler variables, among other things.
+# All switches except "system" have `opam option wrap-{build|install|remove}-commands` that cause the dkml-opam-wrapper to be used.
+# Include tracing so we can see what happens.
+export DKML_BUILD_TRACE=ON
+export DKML_BUILD_TRACE_LEVEL=2
+WRAP="$LOCALAPPDATA\\Programs\\DiskuvOCaml\\0\\tools\\apps\\dkml-opam-wrapper.exe"
+if [ -x /usr/bin/cygpath ]; then
+    WRAP=$(/usr/bin/cygpath -au "$WRAP")
+fi
+
 set -x
-export OPAMCLI=2.0                                              # Mimic environment inside `opam install`
-export MSYS2_ARG_CONV_EXCL='*'                                  # Mimic environment inside `opam install`
 cd _ci/troubleshoot
-autodetect_compiler launch-compiler.sh                          # Create a script to launch a program within an environment containing the compiler (MSVC, etc.)
 opam source ppx_sexp_conv                                       # Get the source code for package; version from the Opam switch (ex. pinned package)
 cd ppx_sexp_conv.*
 tail -v -n5000 ./*opam                                          # Pretty print all the Opam packages
 opam install ./*opam --deps-only --yes                          # Install all the dependencies of the packages
-env
-dune build -p ppx_sexp_conv -j1 --verbose                       # This is the first statement in ppx_sexp_conv.opam build:[] block, except we want verbose to see what is happening
+"$WRAP" dune build -p ppx_sexp_conv -j1 --verbose               # This is the first statement in ppx_sexp_conv.opam build:[] block, except we want verbose to see what is happening
 
 sed -i 's/"-p" name/"--verbose" "-p" name/g' ./*opam            # Force Dune commands to be verbose
-opam install ./*opam --best-effort --yes                        # Install the packages
+PATH=/usr/bin:"$PATH" opam install ./*opam --best-effort --yes  # Install the packages

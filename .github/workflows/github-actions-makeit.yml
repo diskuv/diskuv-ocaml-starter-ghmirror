@@ -128,7 +128,7 @@ jobs:
 
       - name: ./makeit build-${{ matrix.platform }}-Release
         run: |
-          ./makeit build-${{ matrix.platform }}-Release DKML_BUILD_TRACE=ON DKML_BUILD_PRINT_LOGS_ON_ERROR=ON DKML_TROUBLESHOOTING_HOOK=.github/workflows/troubleshoot-example-ppx_sexp_conv.sh
+          ./makeit build-${{ matrix.platform }}-Release DKML_BUILD_TRACE=ON DKML_BUILD_TRACE_LEVEL=2 DKML_BUILD_PRINT_LOGS_ON_ERROR=ON DKML_TROUBLESHOOTING_HOOK=.github/workflows/troubleshoot-example-ppx_sexp_conv.sh
 
       - name: ./makeit test
         run: |
