@@ -1,0 +1,100 @@
+.shared_windows_runners: # Cost to spin up Windows runner is up to 3.5 minutes as of 2021-09-14.
+  # https://gitlab.com/gitlab-org/ci-cd/shared-runners/images/gcp/windows-containers/-/tree/main/cookbooks/preinstalled-software
+  tags:
+    - shared-windows
+    - windows
+    - windows-1809
+
+.before_windows: &before-windows
+  - date
+  - $ErrorActionPreference = 'Stop'
+  - $ProgressPreference = 'SilentlyContinue'
+
+  - $env:PSModulePath += "$([System.IO.Path]::PathSeparator)vendor\diskuv-ocaml\installtime\windows"
+  - Import-Module DeploymentVersion # Use the same $DV_ variables as 'installtime' scripts
+  - Import-Module UnixInvokers      # Use Invoke-MSYS2Command
+
+  # ----------- Chocolatey --------------
+  - |
+    if ($null -eq (Get-Command choco -ErrorAction Ignore)) {
+      if (Test-Path "C:\ProgramData\chocolatey\helpers\chocolateyProfile.psm1") {
+        echo "The GitLab runner has Chocolatey but has not been restarted to reflect the new PATH. Will trigger a PowerShell session refresh until you have restarted it."
+      } else {
+        [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072;
+        iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'));
+      }
+      Import-Module "C:\ProgramData\chocolatey\helpers\chocolateyProfile.psm1";
+      refreshenv;
+    } else {
+      echo "Found Chocolatey";
+    }
+  - date
+
+  # ----------- Curl -----------
+
+  # curl is a built-in Powershell Alias. Want real curl.exe!
+  - Remove-Item Alias:curl
+
+.before_setupmachine: &before-setupmachine
+  # ----------- Visual Studio Detection -----------
+
+  - Import-VSSetup -TempPath "$env:TEMP\vssetup"
+  - $ExtraSetupMachineOpts = ""
+  - if ("$env:SKIP_VISUAL_STUDIO_INSTALL" -eq "ON") { $ExtraSetupMachineOpts = "-SkipAutoInstallVsBuildTools"; Get-CompatibleVisualStudios -ErrorIfNotFound }
+
+  # ----------- setup-machine.ps1 -----------
+  # Timing: 15 seconds if nothing needs to be installed
+
+  - vendor\diskuv-ocaml\installtime\windows\setup-machine.bat -SkipProgress -AllowRunAsAdmin $ExtraSetupMachineOpts
+  - date
+
+  - $CompatibleVisualStudios = Get-CompatibleVisualStudios -ErrorIfNotFound
+  - $CompatibleVisualStudios
+  - $ChosenVisualStudio = ($CompatibleVisualStudios | Select-Object -First 1)
+  - $VisualStudioProps = Get-VisualStudioProperties -VisualStudioInstallation $ChosenVisualStudio
+  - $VisualStudioProps
+  - $VS_EXPORT_CMDS = "export DKML_VSSTUDIO_DIR='$($VisualStudioProps.InstallPath)'; export DKML_VSSTUDIO_VCVARSVER='$($VisualStudioProps.VcVarsVer)'; export DKML_VSSTUDIO_WINSDKVER='$($VisualStudioProps.WinSdkVer)'; export DKML_VSSTUDIO_MSVSPREFERENCE='$($VisualStudioProps.MsvsPreference)'"
+
+.before_msys2: &before-msys2
+  # ----------- MSYS2 -----------
+  # Timing: 5 minutes if MSYS2 needs to be installed
+  # Inputs:
+  #  $VS_EXPORT_CMDS - Optional. A string with `export DKML_VSSTUDIO_DIR='...'; export DKML_VSSTUDIO_VCVARSVER='...'; export DKML_VSSTUDIO_WINSDKVER='...'; export DKML_VSSTUDIO_MSVSPREFERENCE='...'`
+
+  # (Choco best practices: https://docs.chocolatey.org/en-us/choco/commands/#scripting-integration-best-practices-style-guide)
+  - choco upgrade msys2 -y --no-progress --version="'20210604.0.0'" --params="'/NoPath /NoUpdate /InstallDir:C:\msys64'"
+  # msys starts a process in the background and waits on it. it also handles quoting.
+  # msys_direct calls the shell command synchronously.
+  - $env:MSYSTEM = 'MSYS2'       # Start MSYS2 (not MinGW 32 or 64 bit) environments
+  - $env:CHERE_INVOKING = 'yes'  # Preserve the current working directory
+  - if ($null -eq "$VS_EXPORT_CMDS" -or "" -eq "$VS_EXPORT_CMDS") { $VS_EXPORT_CMDS = "echo" }
+  - |
+    function msys_direct() {
+      $path_unix = C:\msys64\usr\bin\cygpath --path "$env:PATH" ;
+      C:\msys64\usr\bin\bash.exe @('-lc') + ("set -eufx -o pipefail; $VS_EXPORT_CMDS; PATH=`"`$PATH`":'${path_unix}'; " + $Args[0]);
+    }
+  - |
+    function msys() {
+      $path_unix = C:\msys64\usr\bin\cygpath --path "$env:PATH" ;
+      Invoke-MSYS2Command -MSYS2Dir C:\msys64 -Command ("set -eufx -o pipefail; $VS_EXPORT_CMDS; PATH=`"`$PATH`":'${path_unix}'; " + $Args[0])
+    }
+  - msys_direct 'pacman -Sy --noconfirm --needed
+      diffutils
+      make
+      patch
+      rsync
+      tar
+      tree
+      unzip
+      wget
+      zip'
+  - msys_direct 'pacman --noconfirm -Scc'  # Cleans the entire package cache
+  - taskkill /F /FI "MODULES eq msys-2.0.dll" # Stops any background services that pacman started, if any
+
+.windows:before-script-shared-msys2-setupmachine:
+  extends:
+  - .shared_windows_runners
+  before_script:
+    - *before-windows
+    - *before-setupmachine
+    - *before-msys2

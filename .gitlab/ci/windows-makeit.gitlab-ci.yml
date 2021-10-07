@@ -1,0 +1,119 @@
+# Split tests into multiple jobs so that can stay within 1hour timelimit on GitLab CI shared runners.
+# Each test job will populate the cache so the next job can go quickly.
+
+.makeit_before: &makeit-before
+    - date
+    - $global:IncrementalDiskuvOcamlDeployment = $true # Use incremental deployments so cache can be re-used.
+    # Pretend to setup-userprofile.bat that LOCALAPPDATA is part of the project so we can cache DiskuvOCaml installations without modification
+    - $OldLocalAppData = "$env:LOCALAPPDATA"
+    - $env:LOCALAPPDATA = "$env:CI_PROJECT_DIR\_ci\LocalAppData"
+    - if (!(Test-Path "$env:LOCALAPPDATA")) { New-Item -Path "$env:LOCALAPPDATA" -ItemType Directory }
+
+windows:makeit-1-before-init-opam:
+  variables:
+    GIT_SUBMODULE_STRATEGY: normal
+    SKIP_VISUAL_STUDIO_INSTALL: 'ON'
+  extends:
+  - .windows:before-script-shared-msys2-setupmachine
+  stage: build
+  needs: []
+  rules:
+    # - if: '$CI_COMMIT_TAG'
+    - if: '$CI_COMMIT_BRANCH == "next"'
+    # - if: '"1" != "1"'
+  cache:
+    key:
+      files:
+        - vendor\diskuv-ocaml\.dkmlroot
+    paths:
+      - _ci\LocalAppData\Programs\DiskuvOCaml
+      - _ci\LocalAppData\opam
+      - _ci\LocalAppData\vcpkg
+
+  script:
+    - *makeit-before
+
+    # Call setup-userprofile.bat
+    # Use incremental deployments and slot 0 so cache can be re-used.
+    # - vendor\diskuv-ocaml\installtime\windows\setup-userprofile.ps1 -SkipProgress -AllowRunAsAdmin -ForceDeploymentSlot0 -Flavor CI -MSYS2Dir C:\msys64 -StopBeforeInitOpam
+    - vendor\diskuv-ocaml\installtime\windows\setup-userprofile.ps1 -SkipProgress -AllowRunAsAdmin -ForceDeploymentSlot0 -Flavor CI -MSYS2Dir C:\msys64
+    - msys_direct 'tree -L 5 _ci/LocalAppData'
+
+    # Remove Cygwin if present since not needed for cache (it is only an intermediate tool for downloading ocaml-opam Docker repository)
+    - msys_direct 'rm -rf _ci/LocalAppData/Programs/DiskuvOCaml/0/tools/cygwin'
+
+    - date
+
+windows:makeit-2-before-create-system-switch:
+  variables:
+    GIT_SUBMODULE_STRATEGY: normal
+    SKIP_VISUAL_STUDIO_INSTALL: 'ON'
+  extends:
+  - .windows:before-script-shared-msys2-setupmachine
+  stage: build
+  needs: ["windows:makeit-1-before-init-opam"]
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "next"'
+    # - if: '"1" != "1"'
+  cache:
+    key:
+      files:
+        - vendor\diskuv-ocaml\.dkmlroot
+    paths:
+      - _ci\LocalAppData\Programs\DiskuvOCaml
+      - _ci\LocalAppData\opam
+      - _ci\LocalAppData\vcpkg
+  script:
+    - *makeit-before
+    - vendor\diskuv-ocaml\installtime\windows\setup-userprofile.ps1 -SkipProgress -AllowRunAsAdmin -ForceDeploymentSlot0 -Flavor CI -MSYS2Dir C:\msys64 -StopBeforeCreateSystemSwitch
+    - msys_direct 'tree -L 5 _ci/LocalAppData'
+    - date
+
+windows:makeit-3-before-install-system-switch:
+  variables:
+    GIT_SUBMODULE_STRATEGY: normal
+    SKIP_VISUAL_STUDIO_INSTALL: 'ON'
+  extends:
+  - .windows:before-script-shared-msys2-setupmachine
+  stage: build
+  needs: ["windows:makeit-2-before-create-system-switch"]
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "next"'
+    # - if: '"1" != "1"'
+  cache:
+    key:
+      files:
+        - vendor\diskuv-ocaml\.dkmlroot
+    paths:
+      - _ci\LocalAppData\Programs\DiskuvOCaml
+      - _ci\LocalAppData\opam
+      - _ci\LocalAppData\vcpkg
+  script:
+    - *makeit-before
+    - vendor\diskuv-ocaml\installtime\windows\setup-userprofile.ps1 -SkipProgress -AllowRunAsAdmin -ForceDeploymentSlot0 -Flavor CI -MSYS2Dir C:\msys64 -StopBeforeInstallSystemSwitch
+    - msys_direct 'tree -L 5 _ci/LocalAppData'
+    - date
+
+windows:makeit-4-remaining:
+  variables:
+    GIT_SUBMODULE_STRATEGY: normal
+    SKIP_VISUAL_STUDIO_INSTALL: 'ON'
+  extends:
+  - .windows:before-script-shared-msys2-setupmachine
+  stage: build
+  needs: ["windows:makeit-3-before-install-system-switch"]
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "next"'
+    # - if: '"1" != "1"'
+  cache:
+    key:
+      files:
+        - vendor\diskuv-ocaml\.dkmlroot
+    paths:
+      - _ci\LocalAppData\Programs\DiskuvOCaml
+      - _ci\LocalAppData\opam
+      - _ci\LocalAppData\vcpkg
+  script:
+    - *makeit-before
+    - vendor\diskuv-ocaml\installtime\windows\setup-userprofile.ps1 -SkipProgress -AllowRunAsAdmin -ForceDeploymentSlot0 -Flavor CI -MSYS2Dir C:\msys64
+    - msys_direct 'tree -L 5 _ci/LocalAppData' ; $true

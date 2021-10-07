@@ -1,0 +1,3 @@
+include:
+  - local: .gitlab/ci/windows.gitlab-ci.yml
+  - local: .gitlab/ci/windows-makeit.gitlab-ci.yml
