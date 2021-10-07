@@ -38,6 +38,9 @@ jobs:
       - name: Setup CI User for Diskuv OCaml
         if: steps.cache_diskuvocaml_archives.outputs.cache-hit != 'true'
         run: |
+          # Strip PATH of all extraneous GitHub Actions programs except Git which is required for setup-userprofile.ps1
+          $env:PATH=("C:\Program Files\Git\cmd;C:\Windows\System32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0")
+
           $global:RedeployIfExists = $true
           $global:IncrementalDiskuvOcamlDeployment = $true
           $ErrorActionPreference = "Continue"
