@@ -48,6 +48,9 @@ jobs:
           $SetupExitCode = $LastExitCode
           if ($SetupExitCode -ne 0) { # TODO: This could be part of something like: setup-userprofile.ps1 -PrintLogsOnError
             Write-Host "`n`n========= [START OF TROUBLESHOOTING] ===========`n`n"
+
+            Write-Host "`n`n=========== [TROUBLESHOOTING] setup-userprofile.full.log ==========="; Get-Content -Path "$env:LOCALAPPDATA\Programs\DiskuvOCaml\0\setup-userprofile.full.log";
+
             Get-ChildItem -Path "$env:LOCALAPPDATA\opam\log\*" -Include "*.env", "*.out" -Exclude "log-*.out", "log-*.env" | ForEach-Object { Write-Host "`n`n========= [TROUBLESHOOTING] $($_.FullName) ===========`n`n"; Get-Content -Path $_.FullName }
 
             # The next line is really an example ... if you need access to an extra log file that is produced by an Opam package's build scripts, then copy and paste the next line
