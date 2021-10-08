@@ -9,7 +9,7 @@
     - $env:LOCALAPPDATA = "$env:CI_PROJECT_DIR\_ci\LocalAppData"
     - if (!(Test-Path "$env:LOCALAPPDATA")) { New-Item -Path "$env:LOCALAPPDATA" -ItemType Directory }
 
-windows:makeit-1-before-init-opam:
+windows:makeit-1-install-tools-msys2-opam-and-init-opam:
   variables:
     GIT_SUBMODULE_STRATEGY: normal
     SKIP_VISUAL_STUDIO_INSTALL: 'ON'
@@ -35,48 +35,20 @@ windows:makeit-1-before-init-opam:
 
     # Call setup-userprofile.bat
     # Use incremental deployments and slot 0 so cache can be re-used.
-    # - vendor\diskuv-ocaml\installtime\windows\setup-userprofile.ps1 -SkipProgress -AllowRunAsAdmin -ForceDeploymentSlot0 -Flavor CI -MSYS2Dir C:\msys64 -StopBeforeInitOpam
-    - vendor\diskuv-ocaml\installtime\windows\setup-userprofile.ps1 -SkipProgress -AllowRunAsAdmin -ForceDeploymentSlot0 -Flavor CI -MSYS2Dir C:\msys64
+    - vendor\diskuv-ocaml\installtime\windows\setup-userprofile.ps1 -SkipProgress -AllowRunAsAdmin -ForceDeploymentSlot0 -Flavor CI -MSYS2Dir C:\msys64 -StopBeforeCreateSystemSwitch
     - msys_direct 'tree -L 5 _ci/LocalAppData'
 
     # Remove Cygwin if present since not needed for cache (it is only an intermediate tool for downloading ocaml-opam Docker repository)
     - msys_direct 'rm -rf _ci/LocalAppData/Programs/DiskuvOCaml/0/tools/cygwin'
 
-    - date
-
-windows:makeit-2-before-create-system-switch:
+windows:makeit-2-create-system-opam-switch:
   variables:
     GIT_SUBMODULE_STRATEGY: normal
     SKIP_VISUAL_STUDIO_INSTALL: 'ON'
   extends:
   - .windows:before-script-shared-msys2-setupmachine
   stage: build
-  needs: ["windows:makeit-1-before-init-opam"]
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "next"'
-    # - if: '"1" != "1"'
-  cache:
-    key:
-      files:
-        - vendor\diskuv-ocaml\.dkmlroot
-    paths:
-      - _ci\LocalAppData\Programs\DiskuvOCaml
-      - _ci\LocalAppData\opam
-      - _ci\LocalAppData\vcpkg
-  script:
-    - *makeit-before
-    - vendor\diskuv-ocaml\installtime\windows\setup-userprofile.ps1 -SkipProgress -AllowRunAsAdmin -ForceDeploymentSlot0 -Flavor CI -MSYS2Dir C:\msys64 -StopBeforeCreateSystemSwitch
-    - msys_direct 'tree -L 5 _ci/LocalAppData'
-    - date
-
-windows:makeit-3-before-install-system-switch:
-  variables:
-    GIT_SUBMODULE_STRATEGY: normal
-    SKIP_VISUAL_STUDIO_INSTALL: 'ON'
-  extends:
-  - .windows:before-script-shared-msys2-setupmachine
-  stage: build
-  needs: ["windows:makeit-2-before-create-system-switch"]
+  needs: ["windows:makeit-1-install-tools-msys2-opam-and-init-opam"]
   rules:
     - if: '$CI_COMMIT_BRANCH == "next"'
     # - if: '"1" != "1"'
@@ -91,17 +63,16 @@ windows:makeit-3-before-install-system-switch:
   script:
     - *makeit-before
     - vendor\diskuv-ocaml\installtime\windows\setup-userprofile.ps1 -SkipProgress -AllowRunAsAdmin -ForceDeploymentSlot0 -Flavor CI -MSYS2Dir C:\msys64 -StopBeforeInstallSystemSwitch
-    - msys_direct 'tree -L 5 _ci/LocalAppData'
-    - date
+    - msys_direct 'tree -L 5 _ci/LocalAppData' ; $true
 
-windows:makeit-4-remaining:
+windows:makeit-3-complete-dkml:
   variables:
     GIT_SUBMODULE_STRATEGY: normal
     SKIP_VISUAL_STUDIO_INSTALL: 'ON'
   extends:
   - .windows:before-script-shared-msys2-setupmachine
   stage: build
-  needs: ["windows:makeit-3-before-install-system-switch"]
+  needs: ["windows:makeit-2-create-system-opam-switch"]
   rules:
     - if: '$CI_COMMIT_BRANCH == "next"'
     # - if: '"1" != "1"'
