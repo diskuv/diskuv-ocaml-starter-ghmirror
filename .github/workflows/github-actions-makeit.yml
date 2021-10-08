@@ -152,7 +152,6 @@ jobs:
         env:
           DKML_BUILD_ROOT: ${{ runner.temp }} # Use short build directory to avoid Windows 260-character absolute path limit
         run: |
-          echo "DKML_BUILD_ROOT = $env:DKML_BUILD_ROOT"
           ./makeit build-${{ matrix.platform }}-Release DKML_TROUBLESHOOTING_HOOK=.github/workflows/troubleshoot-example-ppx_sexp_conv.sh
 
       - name: ./makeit test
