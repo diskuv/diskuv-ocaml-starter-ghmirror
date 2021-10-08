@@ -88,3 +88,65 @@ windows:makeit-3-complete-dkml:
     - *makeit-before
     - vendor\diskuv-ocaml\installtime\windows\setup-userprofile.ps1 -SkipProgress -AllowRunAsAdmin -ForceDeploymentSlot0 -Flavor CI -MSYS2Dir C:\msys64
     - msys_direct 'tree -L 5 _ci/LocalAppData' ; $true
+
+windows:makeit-4-required-build:
+  parallel:
+    matrix:
+      - PLATFORM: windows_x86_64
+  allow_failure: false
+  variables:
+    GIT_SUBMODULE_STRATEGY: normal
+    SKIP_VISUAL_STUDIO_INSTALL: 'ON'
+  extends:
+  - .windows:before-script-shared-msys2-setupmachine
+  stage: build
+  needs: ["windows:makeit-3-complete-dkml"]
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "next"'
+    # - if: '"1" != "1"'
+  cache:
+    key:
+      files:
+        - vendor\diskuv-ocaml\.dkmlroot
+    paths:
+      - _ci\LocalAppData\Programs\DiskuvOCaml
+      - _ci\LocalAppData\opam
+      - _ci\LocalAppData\vcpkg
+  script:
+    - *makeit-before
+    - $env:DKML_BUILD_ROOT = "$env:TEMP" # Use short build directory to avoid Windows 260-character absolute path limit
+    - echo "DKML_BUILD_ROOT = $env:DKML_BUILD_ROOT"
+    - ./makeit "build-${env:PLATFORM}-Release"
+    - ./makeit test
+    - ./makeit dkml-report
+
+windows:makeit-4-optional-build:
+  parallel:
+    matrix:
+      - PLATFORM: windows_x86
+  allow_failure: true
+  variables:
+    GIT_SUBMODULE_STRATEGY: normal
+    SKIP_VISUAL_STUDIO_INSTALL: 'ON'
+  extends:
+  - .windows:before-script-shared-msys2-setupmachine
+  stage: build
+  needs: ["windows:makeit-3-complete-dkml"]
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "next"'
+    # - if: '"1" != "1"'
+  cache:
+    key:
+      files:
+        - vendor\diskuv-ocaml\.dkmlroot
+    paths:
+      - _ci\LocalAppData\Programs\DiskuvOCaml
+      - _ci\LocalAppData\opam
+      - _ci\LocalAppData\vcpkg
+  script:
+    - *makeit-before
+    - $env:DKML_BUILD_ROOT = "$env:TEMP" # Use short build directory to avoid Windows 260-character absolute path limit
+    - echo "DKML_BUILD_ROOT = $env:DKML_BUILD_ROOT"
+    - ./makeit "build-${env:PLATFORM}-Release"
+    - ./makeit test
+    - ./makeit dkml-report
