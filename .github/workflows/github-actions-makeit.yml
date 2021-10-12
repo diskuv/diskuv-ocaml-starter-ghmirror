@@ -183,7 +183,7 @@ jobs:
           submodules: true
 
       - name: Install Opam on macOS
-        run: brew install gpatch && brew install opam
+        run: brew install gpatch && brew install opam pkg-config
         if: ${{ startsWith(matrix.platform, 'darwin_') }}
 
       - name: Cache Opam Switches

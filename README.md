@@ -12,7 +12,7 @@ Windows: https://diskuv.gitlab.io/diskuv-ocaml/
 
 macOS:
 ```sh
-! command -v opam && brew install gpatch && brew install opam
+! command -v opam && brew install gpatch && brew install opam pkg-config
 ./makeit build-dev
 ```
 
