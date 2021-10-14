@@ -12,9 +12,14 @@ Windows: https://diskuv.gitlab.io/diskuv-ocaml/
 
 macOS:
 ```sh
-! command -v opam && brew install gpatch && brew install opam pkg-config
+! command -v opam && brew install gpatch && brew install opam pkg-config cmake ninja
 ./makeit build-dev
 ```
+
+Packages installed:
+* gpatch is needed for brew's `opam` package
+* CMake and Ninja are requirements of `vcpkg`
+* pkg-config is required for many OCaml packages
 
 ## Licensing
 
