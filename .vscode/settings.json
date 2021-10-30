@@ -1,7 +1,7 @@
 {
     "ocaml.sandbox": {
         "kind": "opam",
-        "switch": "${workspaceFolder:diskuv-ocaml-starter}\\build\\dev\\Debug"
+        "switch": "diskuv-host-abi-tools"
     },
     "ocaml.useOcamlEnv": false
 }
