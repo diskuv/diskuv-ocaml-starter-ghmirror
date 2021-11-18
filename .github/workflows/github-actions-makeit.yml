@@ -1,5 +1,12 @@
 name: makeit Actions
-on: [push]
+on:
+  # Because GitLab CI is the authoritative CI for diskuv-ocaml, and assets need to be generated (especially the Diskuv OCaml distribution .zip archives),
+  # we test on a schedule (daily) and we also test on manual workflow (which _could_ be triggered by GitLab CI; see
+  # https://docs.github.com/en/rest/reference/actions#create-a-workflow-dispatch-event) and on any pushes.
+  schedule:
+    - cron: '25 8 * * *' # 08:25 UTC each day
+  workflow_dispatch:
+  push:
 env:
   DKML_BUILD_TRACE: "ON"
   DKML_BUILD_TRACE_LEVEL: "0" # Used only if DKML_BUILD_TRACE is ON. Higher is more verbose; "0" and "2" are the only values.
