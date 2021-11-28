@@ -1,3 +1,6 @@
+include:
+  - local: .gitlab/ci/windows.gitlab-ci.yml
+
 # The following `windows-makeit.gitlab-ci.yml` does a ./makeit build-*-Release, ./makeit test
 # and ./makeit dkml-report.
 #
@@ -7,6 +10,7 @@
 # steps for DKML, and we have diskuv-ocaml-starter-ghmirror and GitHub Actions to do all the Windows
 # ./makeit steps.
 
-# include:
-#   - local: .gitlab/ci/windows.gitlab-ci.yml
 #   - local: .gitlab/ci/windows-makeit.gitlab-ci.yml
+
+explain-why-gitlab-ci-is-disabled:
+    script: echo Disabled GitLab CI because of 1 hour time limit on shared runners. See https://github.com/diskuv/diskuv-ocaml-starter-ghmirror/actions instead.
