@@ -1,3 +1,12 @@
-include:
-  - local: .gitlab/ci/windows.gitlab-ci.yml
-  - local: .gitlab/ci/windows-makeit.gitlab-ci.yml
+# The following `windows-makeit.gitlab-ci.yml` does a ./makeit build-*-Release, ./makeit test
+# and ./makeit dkml-report.
+#
+# However we have commented it out to disabled GitLab CI. Otherwise individual jobs run over
+# the GitLab CI 1 hour time limit on shared runners.
+# We actually have diskuv-ocaml-ghmirror and GitHub Actions to do a Vagrant build of the installation
+# steps for DKML, and we have diskuv-ocaml-starter-ghmirror and GitHub Actions to do all the Windows
+# ./makeit steps.
+
+# include:
+#   - local: .gitlab/ci/windows.gitlab-ci.yml
+#   - local: .gitlab/ci/windows-makeit.gitlab-ci.yml
