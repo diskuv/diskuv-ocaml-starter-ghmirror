@@ -27,9 +27,6 @@ DKML_PLATFORMS = windows_x86_64 windows_x86 darwin_x86_64 darwin_arm64
 # Either ON or OFF
 DKML_VENDOR_VCPKG = ON
 
-# The names of the Opam packages (without the .opam suffix). No platform-specific packages belongs here.
-OPAM_PKGS_CROSSPLATFORM = starter
-
 # The source directories. No platform-specific source code belongs here.
 OCAML_SRC_CROSSPLATFORM = bin lib
 
